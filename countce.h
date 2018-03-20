@@ -11,14 +11,14 @@
 __global__ void countCell(uchar *in,float *out,int *d_ANG,int *d_Mag,float *c_ANG,float *c_Mag,float *p_ANG,float *p_Mag,int ImageHeight,int Imagewidth)
 {
 
-    int xx=blockIdx.x*blockDim.x+4*threadIdx.x;
-    int yy=blockIdx.y*blockDim.y+4*threadIdx.y;
-	 int xx1=blockIdx.x*blockDim.x+4*threadIdx.x+1;
-     int yy1=blockIdx.y*blockDim.y+4*threadIdx.y+1;
-	int xx2=blockIdx.x*blockDim.x+4*threadIdx.x+2;
-    int yy2=blockIdx.y*blockDim.y+4*threadIdx.y+2;
-	 int xx3=blockIdx.x*blockDim.x+4*threadIdx.x+3;
-     int yy3=blockIdx.y*blockDim.y+4*threadIdx.y+3;
+    int xx=blockIdx.x*(blockDim.x*4)+4*threadIdx.x;
+    int yy=blockIdx.y*(blockDim.y*4)+4*threadIdx.y;
+	 int xx1=blockIdx.x*(blockDim.x*4)+4*threadIdx.x+1;
+     int yy1=blockIdx.y*(blockDim.y*4)+4*threadIdx.y+1;
+	int xx2=blockIdx.x*((blockDim.x*4))+4*threadIdx.x+2;
+    int yy2=blockIdx.y*(4*blockDim.y)+4*threadIdx.y+2;
+	 int xx3=blockIdx.x*(blockDim.x*4)+4*threadIdx.x+3;
+     int yy3=blockIdx.y*(blockDim.y*4)+4*threadIdx.y+3;
     int tidx=4*threadIdx.x;
     int tidy=4*threadIdx.y;
 		int tidx1=4*threadIdx.x+1;
@@ -39,7 +39,7 @@ __global__ void countCell(uchar *in,float *out,int *d_ANG,int *d_Mag,float *c_AN
 	 if(c_Mag[tidx3+tidy3*m_nImage]>64)
         return;
     memset(histo,0,1260*sizeof(float));//每个窗口求一个cell，计算直方图的时候，需要把直方图清零
-    __syncthreads();
+    //__syncthreads();
     //for(int stridex=0,stridey=0;stridex<gridDim.x, )
         
 			float t_fm_nbin=p_ANG[yy*Imagewidth+xx]-c_ANG[tidy*m_nImage+tidx];
@@ -67,7 +67,7 @@ __global__ void countCell(uchar *in,float *out,int *d_ANG,int *d_Mag,float *c_AN
 				atomicAdd(& (histo[d_ANG[tidy2*m_nImage+tidx2]*70+d_Mag[tidy2*m_nImage+tidx2]*10+t_nm_nbin2]),p_Mag[yy2*Imagewidth+xx2]);
 			 //__syncthreads();
 				atomicAdd(& (histo[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin]),p_Mag[yy*Imagewidth+xx]);
-            __syncthreads();
+            //__syncthreads();
 			out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin];
 			//__syncthreads();
 			out[d_ANG[tidy1*m_nImage+tidx1]*70+d_Mag[tidy1*m_nImage+tidx1]*10+t_nm_nbin1+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[tidy1*m_nImage+tidx1]*70+d_Mag[tidy1*m_nImage+tidx1]*10+t_nm_nbin1];
@@ -76,7 +76,7 @@ __global__ void countCell(uchar *in,float *out,int *d_ANG,int *d_Mag,float *c_AN
 		out[d_ANG[tidy2*m_nImage+tidx2]*70+d_Mag[tidy2*m_nImage+tidx2]*10+t_nm_nbin2+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[tidy2*m_nImage+tidx2]*70+d_Mag[tidy2*m_nImage+tidx2]*10+t_nm_nbin2];
 		//__syncthreads();
 		out[d_ANG[tidy3*m_nImage+tidx3]*70+d_Mag[tidy3*m_nImage+tidx3]*10+t_nm_nbin3+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[tidy3*m_nImage+tidx3]*70+d_Mag[tidy3*m_nImage+tidx3]*10+t_nm_nbin];
-            __syncthreads();//__syncthreads();
+            //__syncthreads();//__syncthreads();
         
 		
         }
