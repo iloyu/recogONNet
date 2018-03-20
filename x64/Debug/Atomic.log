@@ -1,0 +1,25 @@
+﻿Build started 2018/3/20 15:57:05.
+     1>Project "G:\vsCuda\Atomic\Atomic\Atomic.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         E:\vs2012\VC\bin\x86_amd64\CL.exe /c /IG:\vsCuda\medianFilter\include /I"C:\ProgramData\NVIDIA Corporation\CUDA Samples\v9.1\common\inc" /I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\include" /Zi /nologo /W3 /WX- /Od /D WIN32 /D WIN64 /D _DEBUG /D _CONSOLE /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Debug\\" /Fd"x64\Debug\vc110.pdb" /Gd /TP /errorReport:prompt Source.cpp
+         Source.cpp
+     1>Source.cpp(68): warning C4244: '=' : conversion from 'float' to 'long', possible loss of data
+     1>Source.cpp(33): warning C4101: 'p_ANG' : unreferenced local variable
+     1>Source.cpp(33): warning C4101: 'p_Mag' : unreferenced local variable
+       Link:
+         E:\vs2012\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"G:\vsCuda\Atomic\x64\Debug\Atomic.exe" /INCREMENTAL /NOLOGO /LIBPATH:G:\vsCuda\medianFilter /LIBPATH:"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\lib\x64" opencv_calib3d2413d.lib opencv_features2d2413d.lib opencv_objdetect2413d.lib opencv_gpu2413d.lib opencv_flann2413d.lib opencv_highgui2413d.lib opencv_imgproc2413d.lib opencv_ml2413d.lib opencv_core2413d.lib cudart.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"G:\vsCuda\Atomic\x64\Debug\Atomic.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\vsCuda\Atomic\x64\Debug\Atomic.lib" /MACHINE:X64 x64\Debug\test.cu.obj
+         x64\Debug\Source.obj
+         Atomic.vcxproj -> G:\vsCuda\Atomic\x64\Debug\Atomic.exe
+       PostBuildEvent:
+         echo copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\cudart*.dll" "G:\vsCuda\Atomic\x64\Debug\"
+         copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\cudart*.dll" "G:\vsCuda\Atomic\x64\Debug\"
+         :VCEnd
+         copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\cudart*.dll" "G:\vsCuda\Atomic\x64\Debug\"
+         C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\cudart32_91.dll
+         C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\cudart64_91.dll
+         已复制         2 个文件。
+     1>Done Building Project "G:\vsCuda\Atomic\Atomic\Atomic.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:02.58
