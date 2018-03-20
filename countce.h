@@ -221,15 +221,15 @@ __global__ void normalizeL2Hys(float *in,float *out)
     dim3 block_norm(72);//blob的数量 18*4=72
     dim3 thread_norm(30);//block特征向量长度（m_nBIN）
     
-    for(int i=0;i<h_windowx;i++)
-        for(int j=0;j<h_windowy;j++)
+    for(int i=0;i<h_windowy;i++)
+        for(int j=0;j<h_windowx;j++)
 		{       //smoothcell<<<block_smooth,threads_smooth>>>(device_out+(i*h_windowy+j)*1260,device_smooth_out);
              //countCell<<<blocks,threads>>>(device_in, device_out, device_d_ANG,device_d_Mag,device_c_ANG, device_c_Mag, device_p_ANG, device_p_Mag, Imagewidth,ImageHeight);    
-			smooth<<<1,1>>>(device_out+(i*h_windowy+j)*1260,device_smooth_out);
+			smooth<<<1,1>>>(device_out+(i*h_windowx+j)*1260,device_smooth_out);
 			countblock<<<block_b,thread_b>>>(device_smooth_out,device_block_out);
                 normalizeL2Hys<<<block_norm,thread_norm>>>(device_block_out,device_out_norm);
 
-				checkCudaErrors(cudaMemcpy(out+(i*h_windowy+j)*2160,device_out_norm,size_c_block,cudaMemcpyDeviceToHost));
+				checkCudaErrors(cudaMemcpy(out+(i*h_windowx+j)*2160,device_out_norm,size_c_block,cudaMemcpyDeviceToHost));
                 cudaDeviceSynchronize();
     }
 
