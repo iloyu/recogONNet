@@ -184,14 +184,21 @@ __global__ void reduce(float *in,float *out){
     int tidy=threadIdx.y;
 	int yy=blockIdx.y*blockDim.y+tidy;
 	int xx=blockIdx.x*blockDim.x+tidx;
-	if(blockIdx.x%2==0) in[]+=in[];
+	if(blockIdx.x<8) in[tidy*blockDim.x+tidx]+=in[tidy*blockDim.x+tidx+1280*8];
+	__syncthreads();
+	if(blockIdx.x<4) in[tidy*blockDim.x+tidx]+=in[tidy*blockDim.x+tidx+1280*4];
+	__syncthreads();
+	if(blockIdx.x<2) in[tidy*blockDim.x+tidx]+=in[tidy*blockDim.x+tidx+1280*2];
+	__syncthreads();
+
+	if(blockIdx.x==0)out[tidy*blockDim.x+tidx]=in[tidy*blockDim.x+tidx]+in[tidy*blockDim.x+tidx+1280];
+	
 //	for(int stride=1280*8;stride>1280;stride/=2)
 //	{ if(idx_all<stride)
 //	in[idx_all]+=in[idx_all+stride];
 //		__syncthreads();
 //}
-	if(blockIdx.x==0&&blockIdx.y==0)
-	out[tidy*blockDim.x+tidx]=in[tidy*blockDim.x+tidx];
+
 }
 __global__ void smoothcell(float *in,float *out){
     int t_nleft,t_nright;
@@ -319,11 +326,12 @@ __global__ void normalizeL2Hys(float *in,float *out)
 	dim3 blocks(4,4);
 	dim3 threads(Windowx,Windowy);//每一个线程块计算一个cell的特征量
 	countCell<<<blocks,threads>>>(device_in, device_out, device_d_ANG,device_d_Mag,device_c_ANG, device_c_Mag, device_p_ANG, device_p_Mag, ImageHeight,Imagewidth,d_mask);
-	//checkCudaErrors(cudaDeviceSynchronize());
+	//
 	//getLastCudaError();
 	dim3 reduce_block(16,1);
 	dim3 reduce_thread(128,10);
 	reduce<<<reduce_block,reduce_block>>>(device_out,device_smooth_out);
+	checkCudaErrors(cudaDeviceSynchronize());
 	checkCudaErrors(cudaMemcpy(out,device_smooth_out,size_s_cell,cudaMemcpyDeviceToHost));
 	
     dim3 block_smooth(18,7);//一个cell分18个角度方向,一个方向7个cell，
