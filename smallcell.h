@@ -21,14 +21,17 @@ __global__ void countCell(uchar *in,float *out,int *d_ANG,int *d_Mag,float *c_AN
 	int tidx=threadIdx.x;
     int tidy=threadIdx.y;
     
-	int id=blockIdx.y*gridDim.x+blockIdx.x;
+	int id=blockIdx.x+blockIdx.y*blockDim.x;
 	
 	
 	__shared__  float histo[1280];//一个圆分18个方向(max(0~17))*方向的宽度70(每个方向7个cell每个cell 10个bin)+扇区编号（max(0~6)）*bin数（10）+属于哪个bin(max(0~9))=17*70+6*10+9=1259
+	memset(histo,0,1280*4);
 	__shared__  float t_fm_nbin[32][32];
+	
 	__shared__  int  t_nm_nbin[32][32];
+	
 	__syncthreads();
-	 t_fm_nbin[tidy][tidx]=p_ANG[yy*Imagewidth+xx]-c_ANG[yy*m_nImage+xx];
+	 t_fm_nbin[tidy][tidx]=p_ANG[(yy)*Imagewidth+xx]-c_ANG[(yy)*m_nImage+xx];
 	    if( t_fm_nbin[tidy][tidx]<0)
          atomicAdd(&t_fm_nbin[tidy][tidx],Pi); 
 		  
@@ -38,144 +41,21 @@ __global__ void countCell(uchar *in,float *out,int *d_ANG,int *d_Mag,float *c_AN
 		 t_nm_nbin[tidy][tidx]=(int)(t_fm_nbin[tidy][tidx]*10/Pi);
 		 __syncthreads();
 		 //out[tidy*32+tidx]=t_nm_nbin[tidy][tidx];
-		atomicAdd(& (histo[d_ANG[yy*m_nImage+xx]*70+d_Mag[(yy)*m_nImage+xx]*10+t_nm_nbin[tidy][tidx]]),p_Mag[(yy)*Imagewidth+xx]*mask[xx+yy*m_nImage]);
+		atomicAdd(& (histo[d_ANG[(yy)*m_nImage+xx]*70+d_Mag[(yy)*m_nImage+xx]*10+t_nm_nbin[tidy][tidx]]),
+			p_Mag[(yy)*Imagewidth+xx]*mask[xx+(yy)*m_nImage]);
 		
 		__syncthreads();
-
-		//printf("%f ",histo[tidy*blockDim.x+tidx]);
-		/* int tempflag=tidy%4;
-	 int tempid=tidy/4;*/
-	//if(xx%128!=0||yy%128!=0)
-	//		{*/
-				//add<<<128,10>>>(out,histo);
-		//atomicAdd(&out[tidy*32+tidx],histo[tidy*32+tidx]);	
-		out[tidy*32+tidx+id*1280]=histo[tidy*32+tidx];
-		/*if(tidy%4==0)
-					atomicAdd(&out[1024+(tidy/4)*32+tidx+id*1280],histo[1024+(tidy/4)*32+tidx]);*/
+   //out[d_ANG[(yy)*m_nImage+xx]*70+d_Mag[(yy)*m_nImage+xx]*10+t_nm_nbin[tidy][tidx]]=histo[d_ANG[(yy)*m_nImage+xx]*70+d_Mag[(yy)*m_nImage+xx]*10+t_nm_nbin[tidy][tidx]];
+		atomicAdd(&out[tidy*32+tidx],histo[tidy*32+tidx]);
+		//out[tidy*32+tidx+id*1280]=histo[tidy*32+tidx];
+		if(tidy%4==0)
+				atomicAdd(&out[1024+(tidy/4)*32+tidx],histo[1024+(tidy/4)*32+tidx]);
 		__syncthreads();
-		
-		/*else
-			out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin];	*/
-		//printf("%f ",out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin+(blockIdx.x+blockIdx.y*gridDim.x)*1260]);	
-		//printf("(tidy) %f ",histo[d_ANG[(tidy)*m_nImage+tidx+i]*70+d_Mag[(tidy)*m_nImage+tidx]*10+t_nm_nbin[0][i]]);
-	 //t_fm_nbin[1][i]=p_ANG[(yy+1)*Imagewidth+xx+i]-c_ANG[(tidy+1)*m_nImage+tidx+i];
-	 //   if(t_fm_nbin[1][i]<0)
-  //         atomicAdd(& t_fm_nbin[1][i],Pi); 
-		//if(t_fm_nbin[1][i]<0)
-  //         atomicAdd(&t_fm_nbin[1][i],Pi);
-		//t_nm_nbin[1][i]=(int)(t_fm_nbin[1][i]*10/Pi);
-		////atomicAdd(& (histo[d_ANG[(tidy+1)*m_nImage+tidx+i]*70+d_Mag[(tidy+1)*m_nImage+tidx+i]*10+t_nm_nbin[1][i]]),p_Mag[(yy+1)*Imagewidth+xx+i]*mask[tidx+i+(tidy+1)*m_nImage]);
-		//	 
-		//t_fm_nbin[2][i]=p_ANG[(yy+2)*Imagewidth+xx+i]-c_ANG[(tidy+2)*m_nImage+tidx+i];	
-	 //if(t_fm_nbin[2][i]<0)
-  //         atomicAdd(& t_fm_nbin[2][i],Pi); 
-		//if(t_fm_nbin[2][i]<0)
-  //         atomicAdd(&t_fm_nbin[2][i],Pi);
-		//t_nm_nbin[2][i]=(int)(t_fm_nbin[2][i]*10/Pi);
-	
-	 ////atomicAdd(& (histo[d_ANG[(tidy+2)*m_nImage+tidx+i]*70+d_Mag[(tidy+2)*m_nImage+tidx+i]*10+t_nm_nbin[2][i]]),p_Mag[(yy+2)*Imagewidth+xx+i]*mask[tidx+i+(tidy+2)*m_nImage]);
-		//	 t_fm_nbin[3][i]=p_ANG[(yy+3)*Imagewidth+(xx+i)]-c_ANG[(tidy+3)*m_nImage+tidx+i];
-	 //if(t_fm_nbin[3][i]<0)
-  //         atomicAdd(& t_fm_nbin[3][i],Pi); 
-		//if(t_fm_nbin[3][i]<0)
-  //         atomicAdd(&t_fm_nbin[3][i],Pi);
-		//t_nm_nbin[3][i]=(int)(t_fm_nbin[3][i]*10/Pi);
-		//atomicAdd(& (histo[d_ANG[(tidy+3)*m_nImage+tidx+i]*70+d_Mag[(tidy+3)*m_nImage+tidx+i]*10+t_nm_nbin[3][i]]),mask[tidx+i+(tidy+3)*m_nImage]*p_Mag[(yy+3)*Imagewidth+xx+i]);
-	
 		
 		
 
 }
-		/*;
-		
 	
-	 ////printf("%f %f %f %f ",t_fm_nbin[0][i],t_fm_nbin[1][i],t_fm_nbin[2][i],t_fm_nbin[3][i]);
-
-	//printf("%f %f %f %f ",t_fm_nbin[1][1],t_fm_nbin[1][2],t_fm_nbin[1][3],t_fm_nbin[1][4]);
-	//printf("%f %f %f %f ",t_fm_nbin[2][1],t_fm_nbin[2][2],t_fm_nbin[2][3],t_fm_nbin[2][4]);
-	//printf("%f %f %f %f ",t_fm_nbin[3][1],t_fm_nbin[3][2],t_fm_nbin[3][3],t_fm_nbin[3][4]);
-	//for( i=0;i<4;i++)
-	//{	
-	//	
-	//	if(t_fm_nbin[1][i]<0)
- //          atomicAdd(& t_fm_nbin[0][i],Pi); 
-	//	if(t_fm_nbin[1][i]<0)
- //          atomicAdd(&t_fm_nbin[0][i],Pi);
-	//	if(t_fm_nbin[2][i]<0)
- //          atomicAdd(& t_fm_nbin[0][i],Pi); 
-	//	if(t_fm_nbin[2][i]<0)
- //          atomicAdd(&t_fm_nbin[0][i],Pi);
-	//	if(t_fm_nbin[3][i]<0)
- //          atomicAdd(& t_fm_nbin[0][i],Pi); 
-	//	if(t_fm_nbin[3][i]<0)
- //          atomicAdd(&t_fm_nbin[0][i],Pi);
-	// 
-	// printf("%f ",t_fm_nbin[0][i]);
-	//
-	////printf("\n");
-	//}
-			/*__syncthreads();
-			if(t_fm_nbin<0)
-            t_fm_nbin+=Pi; 
-			if(t_fm_nbin<0)
-            t_fm_nbin+=Pi;
-			int t_nm_nbin=(int)(t_fm_nbin*10/Pi); 
-			if(t_fm_nbin1<0)
-            t_fm_nbin1+=Pi; 
-			if(t_fm_nbin1<0)
-            t_fm_nbin1+=Pi;
-			int t_nm_nbin1=(int)(t_fm_nbin1*10/Pi);
-			if(t_fm_nbin2<0)
-            t_fm_nbin2+=Pi; 
-			if(t_fm_nbin2<0)
-            t_fm_nbin2+=Pi;
-			int t_nm_nbin2=(int)(t_fm_nbin2*10/Pi); 
-			if(t_fm_nbin3<0)
-            t_fm_nbin3+=Pi;
-			if(t_fm_nbin3<0)
-            t_fm_nbin3+=Pi;
-			int t_nm_nbin3=(int)(t_fm_nbin3*10/Pi);
-			__syncthreads();
-			atomicAdd(& (histo[d_ANG[(tidy+1)*m_nImage+tidx+1]*70+d_Mag[(tidy+1)*m_nImage+tidx+1]*10+t_nm_nbin1]),p_Mag[(yy+1)*Imagewidth+xx+1]*mask[tidx+1+(tidy+1)*m_nImage]);
-			atomicAdd(& (histo[d_ANG[(tidy+2)*m_nImage+tidx+2]*70+d_Mag[(tidy+2)*m_nImage+tidx+2]*10+t_nm_nbin2]),p_Mag[(yy+2)*Imagewidth+xx+2]*mask[tidx+2+(tidy+2)*m_nImage]);
-			atomicAdd(& (histo[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin]),p_Mag[yy*Imagewidth+xx]*mask[tidx+tidy*m_nImage]);
-			atomicAdd(& (histo[d_ANG[(tidy+3)*m_nImage+tidx+3]*70+d_Mag[(tidy+3)*m_nImage+tidx+3]*10+t_nm_nbin3]),mask[tidx+3+(tidy+3)*m_nImage]*p_Mag[(yy+3)*Imagewidth+xx+3]);
-			__syncthreads();
-			printf(" %f %f %f %f ",histo[tidx*],);
-		   __syncthreads();
-			if(tidx%32==0)
-				printf("\n");*/
-			//	 //out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin]=histo[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin];	
-		//	 //printf("(tidy+3) %f  %f \n ",histo[d_ANG[(tidy+3)*m_nImage+tidx+3]*70+d_Mag[(tidy+3)*m_nImage+tidx+3]*10+t_nm_nbin3], out[d_ANG[(tidy+3)*m_nImage+tidx+3]*70+d_Mag[(tidy+3)*m_nImage+tidx+3]*10+t_nm_nbin3+(blockIdx.x+blockIdx.y*gridDim.x)*1260]);
-			//printf(" %d %d %d %d \n",t_nm_nbin,t_nm_nbin1,t_nm_nbin2,t_nm_nbin3);
-	
-		
-		//printf("tidy %f \n",histo[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin]);
-		
-	 //}
-
-	//__syncthreads();
-//if(c_Mag[tidx+1+(tidy+1)*m_nImage]<64)
-////{
-	
-	
-//	
-	//printf("tidy1 %f \n",histo[d_ANG[(tidy+1)*m_nImage+tidx+1]*70+d_Mag[(tidy+1)*m_nImage+tidx+1]*10+t_nm_nbin1]);//printf(" %f ",out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin+1260*20]);
-				
-//}
-//__syncthreads();
-
-	 //if(c_Mag[tidx+2+(tidy+2)*m_nImage]<64)
-	 //{
-	
-	
-	/*
-	 out[d_ANG[(tidy+3)*m_nImage+tidx+3]*70+d_Mag[(tidy+3)*m_nImage+tidx+3]*10+t_nm_nbin3+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[(tidy+3)*m_nImage+tidx+3]*70+d_Mag[(tidy+3)*m_nImage+tidx+3]*10+t_nm_nbin3];		 
-	 out[d_ANG[(tidy+1)*m_nImage+tidx+1]*70+d_Mag[(tidy+1)*m_nImage+tidx+1]*10+t_nm_nbin1+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[(tidy+1)*m_nImage+tidx+1]*70+d_Mag[(tidy+1)*m_nImage+tidx+1]*10+t_nm_nbin1];
-	  out[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[tidy*m_nImage+tidx]*70+d_Mag[tidy*m_nImage+tidx]*10+t_nm_nbin];      
-		*/
-	 //out[d_ANG[(tidy+2)*m_nImage+tidx+2]*70+d_Mag[(tidy+2)*m_nImage+tidx+2]*10+t_nm_nbin2+(blockIdx.x+blockIdx.y*gridDim.x)*1260]=histo[d_ANG[(tidy+2)*m_nImage+tidx+2]*70+d_Mag[(tidy+2)*m_nImage+tidx+2]*10+t_nm_nbin2];*/
-
 //dim3 block(18,7);//一个cell分18个角度方向,一个方向7个cell，
 	//dim3 threads(10);//每个cell 10 个bin
 __global__ void reduce(float *in,float *out){
@@ -327,12 +207,12 @@ __global__ void normalizeL2Hys(float *in,float *out)
 	dim3 threads(Windowx,Windowy);//每一个线程块计算一个cell的特征量
 	countCell<<<blocks,threads>>>(device_in, device_out, device_d_ANG,device_d_Mag,device_c_ANG, device_c_Mag, device_p_ANG, device_p_Mag, ImageHeight,Imagewidth,d_mask);
 	//
-	//getLastCudaError();
-	dim3 reduce_block(16,1);
-	dim3 reduce_thread(128,10);
-	reduce<<<reduce_block,reduce_block>>>(device_out,device_smooth_out);
+	////getLastCudaError();
+	//dim3 reduce_block(16,1);
+	//dim3 reduce_thread(128,10);
+	//reduce<<<reduce_block,reduce_block>>>(device_out,device_smooth_out);
 	checkCudaErrors(cudaDeviceSynchronize());
-	checkCudaErrors(cudaMemcpy(out,device_smooth_out,size_s_cell,cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(out,device_out,1280*sizeof(float),cudaMemcpyDeviceToHost));
 	
     dim3 block_smooth(18,7);//一个cell分18个角度方向,一个方向7个cell，
     dim3 threads_smooth(10);//每个cell 10 个bin
