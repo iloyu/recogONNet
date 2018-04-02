@@ -26,7 +26,8 @@ __global__ void right(float *in,float *out,float *device_c_ANG,float *device_c_M
 	}
 			__syncthreads();
 			if(blockIdx.x>28)
-			{if( t_fm_nbin[tidy][tidx]<0)
+			{   t_fm_nbin[tidy][tidx]=device_p_ANG[yy*Imagewidth+xx]-device_c_ANG[(yy)*m_nImage+xx];
+				if( t_fm_nbin[tidy][tidx]<0)
 					atomicAdd(&t_fm_nbin[tidy][tidx],Pi); 
 		  
 			if( t_fm_nbin[tidy][tidx]<0)
